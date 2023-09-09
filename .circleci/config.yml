@@ -1,0 +1,99 @@
+version: 2.1
+jobs:
+  create-eks-cluster:
+    docker:
+      - image: circleci/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Create/Provision ECR Repository
+          command: |
+            # Check if the ECR repository already exists, if not, create it
+            if ! aws ecr describe-repositories --repository-names my-ecr-repo &> /dev/null; then
+              aws ecr create-repository --repository-name my-ecr-repo
+            fi
+            export ECR_REPO_URI=$(aws ecr describe-repositories --repository-names my-ecr-repo --query 'repositories[0].repositoryUri' --output text)
+      - run:
+          name: Create/Provision EKS Cluster
+          command: |
+            if ! aws eks describe-cluster --name my-eks-cluster &> /dev/null; then
+              aws cloudformation create-stack \
+                --stack-name eks-cluster-stack \
+                --template-body file://infrastructure/eks-cluster.yaml \
+                --parameters \
+                  ParameterKey=ClusterName,ParameterValue=my-eks-cluster \
+                  # Add more parameters as needed
+                --region us-west-2
+              aws cloudformation wait stack-create-complete --stack-name eks-cluster-stack --region us-west-2
+            fi
+
+  lint-and-build:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - run:
+          name: Linting Application
+          command: |
+            cd application
+            pip install -r requirements.txt
+            pylint app.py
+
+  build-and-deploy:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - run:
+          name: Build Docker Image and Push to ECR
+          command: |
+            cd application
+            # Authenticate with AWS ECR
+            aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $ECR_REPO_URI
+            # Build and tag your Docker image
+            docker build -t my-app:latest .
+            # Tag the Docker image with the ECR repository URI
+            docker tag my-app:latest $ECR_REPO_URI/my-app:latest
+            # Push the Docker image to ECR
+            docker push $ECR_REPO_URI/my-app:latest
+
+  deploy-to-eks:
+    docker:
+      - image: circleci/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Set Image Environment Variables
+          command: |
+            # Set environment variables IMAGE_NAME and IMAGE_TAG
+            # to be used in the Kubernetes deployment YAML
+            export IMAGE_NAME=my-app
+            export IMAGE_TAG=latest
+
+      - run:
+          name: Deploy Application to EKS
+          command: |
+            cd application
+            kubectl apply -f deployment.yaml
+            kubectl rollout status deployment/my-app-deployment
+            kubectl apply -f service.yaml
+            
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - create-eks-cluster:
+          filters:
+            branches:
+              only: master
+      - lint-and-build:
+          requires:
+            - create-eks-cluster
+      - build-and-deploy:
+          requires:
+            - lint-and-build
+      - deploy-to-eks:
+          requires:
+            - create-eks-cluster
+            - lint-and-build
