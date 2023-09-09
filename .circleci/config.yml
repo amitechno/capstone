@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   create-eks-cluster:
     docker:
-      - image: circleci/aws-cli
+      - image: amazon/aws-cli
     steps:
       - checkout
       - run:
@@ -59,7 +59,7 @@ jobs:
 
   deploy-to-eks:
     docker:
-      - image: circleci/aws-cli
+      - image: amazon/aws-cli
     steps:
       - checkout
       - run:
