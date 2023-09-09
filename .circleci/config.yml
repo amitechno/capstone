@@ -82,10 +82,7 @@ jobs:
 workflows:
   default:
     jobs:
-      - create-eks-cluster:
-          filters:
-            branches:
-              only: master
+      - create-eks-cluster
       - lint-and-build:
           requires:
             - create-eks-cluster
