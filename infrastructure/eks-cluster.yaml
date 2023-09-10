@@ -45,7 +45,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub ${ClusterName}-WorkerNode-SG
-      VpcId: vpc-0ed9cbcea5ee96bff
+      VpcId: vpc-0bdda08b4ef2ccbbf
       GroupDescription: Security group for EKS worker nodes # Add a meaningful description here
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
@@ -61,8 +61,8 @@ Resources:
       Version: "1.21" 
       ResourcesVpcConfig:
         SubnetIds:
-          - subnet-0d0f10ae832a999ac
-          - subnet-0c9730695e1e214d4
+          - subnet-0f0442930ad570e64
+          - subnet-0f85573b3d9f7d5ee
         SecurityGroupIds:
           - !Ref EKSWorkerNodeSecurityGroup
       Logging:
@@ -78,8 +78,8 @@ Resources:
       NodegroupName: eks-worker-nodegroup
       NodeRole: !GetAtt EKSWorkerNodeRole.Arn
       Subnets:
-        - subnet-0d0f10ae832a999ac
-        - subnet-0c9730695e1e214d4
+        - subnet-0f0442930ad570e64
+        - subnet-0f85573b3d9f7d5ee
       ScalingConfig:
         MinSize: 1
         MaxSize: 3
