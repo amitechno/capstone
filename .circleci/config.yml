@@ -22,7 +22,7 @@ jobs:
                 --template-body file://infrastructure/eks-cluster.yaml \
                 --parameters \
                   ParameterKey=ClusterName,ParameterValue=my-eks-cluster \
-                  # Add more parameters as needed
+                --capabilities CAPABILITY_NAMED_IAM \
                 --region us-west-2
               aws cloudformation wait stack-create-complete --stack-name eks-cluster-stack --region us-west-2
             fi
