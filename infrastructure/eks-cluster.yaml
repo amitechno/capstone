@@ -45,7 +45,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub ${ClusterName}-WorkerNode-SG
-      VpcId: vpc-0ed9cbcea5ee96bff 
+      VpcId: vpc-12345678 # Replace with your VPC ID
+      GroupDescription: Security group for EKS worker nodes # Add a meaningful description here
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           FromPort: 80
