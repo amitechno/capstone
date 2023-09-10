@@ -66,9 +66,9 @@ jobs:
             # Build and tag your Docker image
             docker build -t my-app:latest .
             # Tag the Docker image with the ECR repository URI
-            docker tag my-app:latest $ECR_REPO_URI/my-app:latest
+            docker tag my-app:latest $ECR_REPO_URI:latest
             # Push the Docker image to ECR
-            docker push $ECR_REPO_URI/my-app:latest
+            docker push $ECR_REPO_URI:latest
 
   deploy-to-eks:
     docker:
