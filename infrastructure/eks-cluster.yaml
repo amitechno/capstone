@@ -67,13 +67,9 @@ Resources:
           - !Ref EKSWorkerNodeSecurityGroup
       Logging:
         ClusterLogging:
-          - Types:
-              - api
-              - audit
-              - authenticator
-              - controllerManager
-              - scheduler
-            Enabled: true
+          EnabledTypes:
+            - Type: api
+            - Type: audit
 
   EKSNodeGroup:
     Type: AWS::EKS::Nodegroup
