@@ -58,7 +58,7 @@ Resources:
     Properties:
       Name: !Ref ClusterName
       RoleArn: !GetAtt EKSAdminRole.Arn
-      Version: "1.28" 
+      Version: "1.25" 
       ResourcesVpcConfig:
         SubnetIds:
           - subnet-0f0442930ad570e64
