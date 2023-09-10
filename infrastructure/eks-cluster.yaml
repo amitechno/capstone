@@ -1,63 +1,96 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: Minimal Amazon EKS Cluster with a Single Node (Default VPC)
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  ClusterName:
+    Type: String
+    Description: Name of the EKS cluster
 
 Resources:
-  EKSRole:
+  EKSAdminRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub ${ClusterName}-Admin-Role
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Service: eks.amazonaws.com
-            Action: sts:AssumeRole
+              Service:
+                - eks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+        - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+
+  EKSWorkerNodeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ClusterName}-WorkerNode-Role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+
+  EKSWorkerNodeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${ClusterName}-WorkerNode-SG
+      Description: Security group for EKS worker nodes
+      VpcId: vpc-0ed9cbcea5ee96bff 
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 80
+          ToPort: 65535
+          IpProtocol: -1
 
   EKSCluster:
     Type: AWS::EKS::Cluster
     Properties:
-      Name: my-eks-cluster
-      RoleArn:
-        Fn::GetAtt:
-          - EKSRole
-          - Arn
-      Version: '1.21'
+      Name: !Ref ClusterName
+      RoleArn: !GetAtt EKSAdminRole.Arn
+      Version: "1.21" 
+      ResourcesVpcConfig:
+        SubnetIds:
+          - subnet-0d0f10ae832a999ac
+          - subnet-0c9730695e1e214d4
+        SecurityGroupIds:
+          - !Ref EKSWorkerNodeSecurityGroup
+      Logging:
+        ClusterLogging:
+          - Types:
+              - api
+              - audit
+              - authenticator
+              - controllerManager
+              - scheduler
+            Enabled: true
 
-  NodeInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: /
-      Roles:
-        - Fn::Ref: EKSNodeRole
-
-  EKSNodeRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-
-  NodeGroup:
+  EKSNodeGroup:
     Type: AWS::EKS::Nodegroup
     Properties:
-      ClusterName:
-        Fn::GetAtt:
-          - EKSCluster
-          - Name
-      NodegroupName: my-node-group
-      NodeRole:
-        Fn::GetAtt:
-          - EKSNodeRole
-          - Arn
+      ClusterName: !Ref EKSCluster
+      NodegroupName: eks-worker-nodegroup
+      NodeRole: !GetAtt EKSWorkerNodeRole.Arn
+      Subnets:
+        - subnet-0d0f10ae832a999ac
+        - subnet-0c9730695e1e214d4
       ScalingConfig:
         MinSize: 1
-        MaxSize: 1
-        DesiredSize: 1
+        MaxSize: 3
+        DesiredSize: 2
+      DiskSize: 20
+
+Outputs:
+  EKSClusterName:
+    Description: EKS Cluster Name
+    Value: !Ref EKSCluster
