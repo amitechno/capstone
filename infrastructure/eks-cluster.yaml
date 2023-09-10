@@ -61,8 +61,8 @@ Resources:
       Version: "1.25" 
       ResourcesVpcConfig:
         SubnetIds:
-          - subnet-0f0442930ad570e64
-          - subnet-0f85573b3d9f7d5ee
+          - subnet-06b4a63280860e7ca
+          - subnet-053d158a6985504ee
         SecurityGroupIds:
           - !Ref EKSWorkerNodeSecurityGroup
       Logging:
@@ -78,8 +78,8 @@ Resources:
       NodegroupName: eks-worker-nodegroup
       NodeRole: !GetAtt EKSWorkerNodeRole.Arn
       Subnets:
-        - subnet-0f0442930ad570e64
-        - subnet-0f85573b3d9f7d5ee
+        - subnet-06b4a63280860e7ca
+        - subnet-053d158a6985504ee
       ScalingConfig:
         MinSize: 1
         MaxSize: 3
