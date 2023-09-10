@@ -26,6 +26,7 @@ jobs:
                 --region us-east-1
               aws cloudformation wait stack-create-complete --stack-name eks-cluster-stack --region us-east-1
             fi
+          no_output_timeout: 20m
 
   lint-and-build:
     docker:

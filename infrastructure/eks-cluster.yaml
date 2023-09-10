@@ -88,5 +88,6 @@ Resources:
 
 Outputs:
   EKSClusterName:
+  
     Description: EKS Cluster Name
     Value: !Ref EKSCluster
