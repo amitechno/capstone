@@ -12,7 +12,7 @@ jobs:
             if ! aws ecr describe-repositories --repository-names my-ecr-repo &> /dev/null; then
               aws ecr create-repository --repository-name my-ecr-repo
             fi
-            export ECR_REPO_URI=$(aws ecr describe-repositories --repository-names my-ecr-repo --query 'repositories[0].repositoryUri' --output text)
+            
       - run:
           name: Create/Provision EKS Cluster
           command: |
@@ -34,22 +34,26 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Linting Application
+          name: Linting and Testing Application
           command: |
             cd application
             pip install -r requirements.txt
             pylint app.py
+            pytest app_pytest.py 
 
   build-and-deploy:
     docker:
-      - image: circleci/python:3.8
+      - image: amazon/aws-cli
     steps:
       - checkout
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: Build Docker Image and Push to ECR
           command: |
             cd application
             # Authenticate with AWS ECR
+            export ECR_REPO_URI=$(aws ecr describe-repositories --repository-names my-ecr-repo --query 'repositories[0].repositoryUri' --output text)
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REPO_URI
             # Build and tag your Docker image
             docker build -t my-app:latest .
