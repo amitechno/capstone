@@ -43,11 +43,19 @@ jobs:
 
   build-and-deploy:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/base:2022.06
     steps:
       - checkout
       - setup_remote_docker:
           version: 20.10.14
+          docker_layer_caching: true
+      - run:
+          name: Install AWS CLI
+          command: |
+            # Install the AWS CLI
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Build Docker Image and Push to ECR
           command: |
@@ -73,7 +81,7 @@ jobs:
             # Install kubectl
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
             chmod +x kubectl
-            sudo mv kubectl /usr/local/bin/
+            mv kubectl /usr/local/bin/
       - run:
           name: Set Image Environment Variables
           command: |
