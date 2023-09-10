@@ -82,18 +82,12 @@ jobs:
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
             chmod +x kubectl
             mv kubectl /usr/local/bin/
-      - run:
-          name: Set Image Environment Variables
-          command: |
-            # Set environment variables IMAGE_NAME and IMAGE_TAG
-            # to be used in the Kubernetes deployment YAML
-            export IMAGE_NAME=my-app
-            export IMAGE_TAG=latest
 
       - run:
           name: Deploy Application to EKS
           command: |
             cd kubernetes
+            aws eks update-kubeconfig --name my-eks-cluster --region us-east-1
             kubectl apply -f deployment.yaml
             kubectl rollout status deployment/my-app-deployment
             kubectl apply -f service.yaml
